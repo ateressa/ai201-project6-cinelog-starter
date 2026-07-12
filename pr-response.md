@@ -8,8 +8,8 @@
 **How I verified:** Grepped the whole project for `save_to_watchlist` after the rename to confirm no remaining references to the old name.
 
 ## Comment 2 — Deduplication
-**What I did:**
-**How I verified:**
+**What I did:** Added an `AlreadyInWatchlistError` exception and a duplicate check in `add_to_watchlist()` (`services/watchlist_service.py`), mirroring the existing `AlreadyInCollectionError` pattern in `collection_service.add_to_collection()`. Before inserting a new `WatchlistEntry`, the function now queries for an existing `(user_id, film_id)` pair and raises before any write occurs if one is found.
+**How I verified:** Manually traced the code path against the `add_to_collection()` reference implementation to confirm the same query-then-raise-before-write order, so no partial/duplicate entry can be committed. 
 
 ## Comment 3 — Missing test
 **What I did:**
