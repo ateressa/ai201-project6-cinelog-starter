@@ -16,9 +16,9 @@
 **How I verified:** Ran `pytest tests/test_watchlist.py -v` — 1 passed.
 
 ## Comment 4 — Default visibility
-**My position:**
-**Reasoning:**
-**Tradeoff acknowledged:**
+**My position:** Keep `WatchlistEntry.public` defaulting to `True`.
+**Reasoning:** A watchlist is a "here's what I want to watch" signal, not a diary of private behavior the way a viewing history can be — so the default should optimize for the social, low-friction case: friends browsing each other's watchlists to plan a movie night, get recommendations, or piggyback on someone else's queue. If new entries defaulted to private, that value only shows up after a user actively finds and flips a visibility setting most people won't know exists on day one — so the social feature would be dead on arrival for the average user, since almost nothing would be visible for anyone to discover in the first place. Defaulting to public matches the norm in comparable social-logging apps (e.g. Letterboxd), where opt-out privacy is what makes the network effect work.
+**Tradeoff acknowledged:** The cost is a real privacy risk: a user could add something they'd rather not have visible (e.g. a film tied to a sensitive topic, or just something they find embarrassing) before they've ever noticed the `public` flag exists, let alone changed it. That's an unintentional-overexposure risk that opt-in visibility wouldn't have. I'd mitigate it at the UX layer rather than by flipping the default — e.g. surfacing the visibility toggle inline on the "add to watchlist" action itself, rather than burying it in a settings page — so the tradeoff is disclosed at the moment it matters instead of being invisible until a user is surprised by it.
 
 ## Comment 5 — Sort order
 **My position:**
