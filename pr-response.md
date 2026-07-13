@@ -67,3 +67,4 @@ I used Claude Code (Anthropic's CLI-based AI coding assistant) as a pair-program
 6. `GET /watchlist/<user_id>` — expect the added film(s) back, most recently added first.
 7. Run the automated suite: `pytest tests/ -v` — all 5 tests should pass.
 
+![Log Screenshot](watchlist-log.png)
