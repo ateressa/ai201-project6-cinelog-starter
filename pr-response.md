@@ -12,8 +12,8 @@
 **How I verified:** Manually traced the code path against the `add_to_collection()` reference implementation to confirm the same query-then-raise-before-write order, so no partial/duplicate entry can be committed. 
 
 ## Comment 3 — Missing test
-**What I did:**
-**How I verified:**
+**What I did:** Created `tests/test_watchlist.py` with `test_add_to_watchlist_nonexistent_film_raises`, the watchlist equivalent of `test_add_to_collection_nonexistent_film_raises` in `tests/test_collection.py`. It reuses the same `app`/`sample_user` fixture pattern and asserts that calling `add_to_watchlist()` with a nonexistent `film_id` raises `FilmNotFoundError`. Since `Film.id` is still an integer (pre-UUID-refactor) on this branch, the fake id used is an out-of-range integer (`999999`) rather than a UUID string, so the test actually matches the current column type.
+**How I verified:** Ran `pytest tests/test_watchlist.py -v` — 1 passed.
 
 ## Comment 4 — Default visibility
 **My position:**
