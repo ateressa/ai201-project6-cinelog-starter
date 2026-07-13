@@ -1,7 +1,10 @@
 # PR Response Doc — CineLog Watchlist Feature
 
 ## AI Usage
-<!-- Fill in at the end — how you used AI tools during this project -->
+I used Claude Code (Anthropic's CLI-based AI coding assistant) as a pair-programming collaborator throughout this PR, directing each step rather than accepting changes wholesale:
+
+
+- **Orientation:** Had it walk me through `models.py` and `collection_service.py` (responsibilities, function-by-function behavior, cross-file dependencies) before making any changes, so I understood the existing conventions I needed to match.
 
 ## Comment 1 — Rename
 **What I did:** Renamed `save_to_watchlist()` to `add_to_watchlist()` in `services/watchlist_service.py` so it follows the same `add_to_<noun>` naming convention as `collection_service.add_to_collection()`. Updated the one call site in `routes/watchlist/watchlist.py` (the import and the invocation inside `add_film()`).
@@ -31,4 +34,36 @@
 **How I verified no conflict remains:** Ran `pytest tests/ -v` — all 5 tests passed (both `test_collection.py` and `test_watchlist.py`), and confirmed manually as well. Also ran `git log --merges origin/main..HEAD`, which returned no commits — confirming the rebase kept a linear history with no merge commits introduced on this branch, per the contributing guide's requirement.
 
 ## PR Description
-<!-- Written at the end — feature overview, design decisions, manual testing steps -->
+
+
+**What this feature does:** Adds a watchlist to CineLog — a place for a user to save films they intend to watch, separate from their collection of films already watched. Exposes `GET /watchlist/<user_id>` to view a user's watchlist (sorted newest-added first) and `POST /watchlist/<user_id>/add` to add a film to it, with duplicate-entry protection and a per-entry public/private visibility flag.
+
+
+**Design decisions:**
+- `add_to_watchlist()` follows the codebase's `verb_to_noun` naming convention and mirrors `add_to_collection()`'s structure directly: same nonexistent-film check (`FilmNotFoundError`), same duplicate-entry check pattern (`AlreadyInWatchlistError` alongside the existing `AlreadyInCollectionError`) (Comments 1–2).
+- `WatchlistEntry.public` defaults to `True` — watchlists are treated as a low-stakes, forward-looking signal worth optimizing for social discovery (e.g. friends browsing each other's queues) rather than defaulting to private; the privacy tradeoff is accepted deliberately and mitigated at the UX layer, not the data layer. Full reasoning in Comment 4 above.
+- `get_watchlist()` sorts by `date_added` descending (newest first), matching `get_collection()`'s existing convention, since a watchlist behaves like an active queue rather than a searchable catalog. Full reasoning in Comment 5 above.
+- `WatchlistEntry.film_id` is a UUID string (`db.String(36)`), matching `Film.id` after main's UUID migration — restored and corrected after a rebase onto `main` silently dropped the model (Comment 6 above).
+- `routes/watchlist/watchlist.py`'s `add_film()` now catches `FilmNotFoundError` (→ 404) and `AlreadyInWatchlistError` (→ 409), matching the error-handling pattern already used in `routes/collection.py`, instead of letting those errors surface as an unhandled 500.
+
+
+**How to manually test:**
+1. Install dependencies (`pip install -r requirements.txt`) and run the app.
+2. Create a user and a film directly via a Python shell (there's no user-creation endpoint, and `/films` is read-only/seeded per its docstring):
+  ```python
+  from app import create_app, db
+  from models import User, Film
+  app = create_app()
+  with app.app_context():
+     user = User(username="testuser", email="test@example.com")
+     film = Film(title="Paddington 2", year=2017)
+     db.session.add_all([user, film])
+     db.session.commit()
+     print(user.id, film.id)
+  ```
+3. `POST /watchlist/<user_id>/add` with `{"film_id": "<film-uuid>"}` — expect `201` with the new entry as JSON.
+4. Repeat the same `POST` — expect `409` (already in watchlist), not a duplicate row.
+5. `POST` with a made-up UUID for `film_id` — expect `404` (film not found), not a 500.
+6. `GET /watchlist/<user_id>` — expect the added film(s) back, most recently added first.
+7. Run the automated suite: `pytest tests/ -v` — all 5 tests should pass.
+
