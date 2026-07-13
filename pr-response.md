@@ -41,9 +41,9 @@ I used Claude Code (Anthropic's CLI-based AI coding assistant) as a pair-program
 
 **Design decisions:**
 - `add_to_watchlist()` follows the codebase's `verb_to_noun` naming convention and mirrors `add_to_collection()`'s structure directly: same nonexistent-film check (`FilmNotFoundError`), same duplicate-entry check pattern (`AlreadyInWatchlistError` alongside the existing `AlreadyInCollectionError`) (Comments 1–2).
-- `WatchlistEntry.public` defaults to `True` — watchlists are treated as a low-stakes, forward-looking signal worth optimizing for social discovery (e.g. friends browsing each other's queues) rather than defaulting to private; the privacy tradeoff is accepted deliberately and mitigated at the UX layer, not the data layer. Full reasoning in Comment 4 above.
-- `get_watchlist()` sorts by `date_added` descending (newest first), matching `get_collection()`'s existing convention, since a watchlist behaves like an active queue rather than a searchable catalog. Full reasoning in Comment 5 above.
-- `WatchlistEntry.film_id` is a UUID string (`db.String(36)`), matching `Film.id` after main's UUID migration — restored and corrected after a rebase onto `main` silently dropped the model (Comment 6 above).
+- **Default visibility:** `WatchlistEntry.public` defaults to `True` — watchlists are treated as a low-stakes, forward-looking signal worth optimizing for social discovery (e.g. friends browsing each other's queues) rather than defaulting to private; the privacy tradeoff is accepted deliberately and mitigated at the UX layer, not the data layer. Full reasoning in Comment 4 of `pr-response.md`.
+- **Sort order:** `get_watchlist()` sorts by `date_added` descending (newest first), matching `get_collection()`'s existing convention, since a watchlist behaves like an active queue rather than a searchable catalog. Full reasoning in Comment 5 of `pr-response.md`.
+- `WatchlistEntry.film_id` is a UUID string (`db.String(36)`), matching `Film.id` after main's UUID migration — restored and corrected after a rebase onto `main` silently dropped the model (see Comment 6 of `pr-response.md`).
 - `routes/watchlist/watchlist.py`'s `add_film()` now catches `FilmNotFoundError` (→ 404) and `AlreadyInWatchlistError` (→ 409), matching the error-handling pattern already used in `routes/collection.py`, instead of letting those errors surface as an unhandled 500.
 
 
